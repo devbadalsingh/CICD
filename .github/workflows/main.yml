@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean
 on:
   push:
     branches:
-      - master  # Trigger on pushes to the main branch
+      - master  # Trigger on pushes to the master branch
 
 jobs:
   deploy:
@@ -18,23 +18,27 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '20' # Specify your Node.js version
+        node-version: '20' # Updated Node.js version as per GitHub guidelines
 
     # Install dependencies
     - name: Install dependencies
       run: npm install
 
-    # Push code to the DigitalOcean Droplet
+    # Deploy to DigitalOcean Droplet
     - name: Deploy to DigitalOcean
       env:
-        HOST: 152.42.158.221
-        USERNAME: root
-        PASSWORD: only1loanbad123
+        HOST: ${{ secrets.HOST }}
+        USERNAME: ${{ secrets.USERNAME }}
+        PASSWORD: ${{ secrets.PASSWORD }}
       run: |
         echo "Deploying to DigitalOcean server..."
         sshpass -p $PASSWORD ssh -o StrictHostKeyChecking=no $USERNAME@$HOST "
-        cd /express-backend || exit
-        git pull origin master
+        cd /express-backend || {
+          echo 'Directory /express-backend not found. Exiting.' && exit 1;
+        }
+        git pull origin master || {
+          echo 'Failed to pull from repository. Exiting.' && exit 1;
+        }
         npm install
-        node index.js
+        pm2 restart all || node index.js
         "
