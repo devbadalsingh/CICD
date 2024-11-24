@@ -3,45 +3,38 @@ name: Deploy to DigitalOcean
 on:
   push:
     branches:
-      - master
+      - master  # Trigger on pushes to the main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    # Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      # Step 2: Set up Node.js
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+    # Set up Node.js
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20' # Specify your Node.js version
 
-      # Step 3: Add SSH key to agent
-      - name: Add SSH key to agent
-        env:
-          PASSPHRASE: ${{ secrets.DIGITALOCEAN_PASSPHRASE }}
-          PRIVATE_KEY: ${{ secrets.DIGITALOCEAN_PRIVATE_KEY }}
-        run: |
-          eval "$(ssh-agent -s)"
-          echo -e "$PRIVATE_KEY" | tr -d '\r' > private_key.pem
-          chmod 600 private_key.pem
-          ssh-add private_key.pem <<< "$PASSPHRASE"
-          rm private_key.pem
+    # Install dependencies
+    - name: Install dependencies
+      run: npm install
 
-      # Step 4: Deploy to DigitalOcean
-      - name: Deploy to DigitalOcean
-        env:
-          HOST: ${{ secrets.DIGITALOCEAN_HOST }}
-          USERNAME: ${{ secrets.DIGITALOCEAN_USERNAME }}
-        run: |
-          ssh -o StrictHostKeyChecking=no $USERNAME@$HOST << 'EOF'
-          echo "Successfully logged in to the server!"
-          cd . || exit 1
-          git pull origin master || exit 1
-          npm install || exit 1
-          node index.js || exit 1
-          EOF
+    # Push code to the DigitalOcean Droplet
+    - name: Deploy to DigitalOcean
+      env:
+        HOST: 152.42.158.221
+        USERNAME: root
+        PASSWORD: only1loanbad123
+      run: |
+        echo "Deploying to DigitalOcean server..."
+        sshpass -p $PASSWORD ssh -o StrictHostKeyChecking=no $USERNAME@$HOST "
+        cd /express-backend || exit
+        git pull origin master
+        npm install
+        node index.js
+        "
