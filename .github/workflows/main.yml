@@ -18,7 +18,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '20' # Node.js version
+        node-version: '20'
 
     # Install dependencies
     - name: Install dependencies
@@ -36,13 +36,13 @@ jobs:
         cd /root/express-backend || {
           echo 'Directory /express-backend not found. Exiting.' && exit 1;
         }
-        
+
         # Pull the latest code
         git pull origin master || {
           echo 'Failed to pull from repository. Exiting.' && exit 1;
         }
 
-        # Ensure dependencies are installed
+        # Install dependencies
         npm install
 
         # Check if PM2 is installed, install if not
@@ -51,10 +51,18 @@ jobs:
           npm install -g pm2
         fi
 
-        # Start or restart the application using PM2
-        pm2 start index.js --name "express-backend" --watch || {
-          echo 'Failed to start or restart application with PM2. Exiting.' && exit 1;
-        }
+        # Start or reload the application with PM2 (zero downtime deployment)
+        if pm2 describe "express-backend" > /dev/null; then
+          echo 'Application already running. Reloading with zero downtime...'
+          pm2 reload "express-backend" --update-env || {
+            echo 'Failed to reload application. Exiting.' && exit 1;
+          }
+        else
+          echo 'Starting application...'
+          pm2 start index.js --name "express-backend" --watch || {
+            echo 'Failed to start application. Exiting.' && exit 1;
+          }
+        fi
 
         # Ensure the application is running
         pm2 list || {
