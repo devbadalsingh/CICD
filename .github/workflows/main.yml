@@ -33,7 +33,7 @@ jobs:
       run: |
         echo "Deploying to DigitalOcean server..."
         sshpass -p $PASSWORD ssh -o StrictHostKeyChecking=no $USERNAME@$HOST "
-        cd /express-backend || {
+        cd /root/express-backend || {
           echo 'Directory /express-backend not found. Exiting.' && exit 1;
         }
         git pull origin master || {
