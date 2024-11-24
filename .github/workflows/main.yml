@@ -18,7 +18,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '20' # Updated Node.js version as per GitHub guidelines
+        node-version: '20' # Node.js version
 
     # Install dependencies
     - name: Install dependencies
@@ -36,9 +36,28 @@ jobs:
         cd /root/express-backend || {
           echo 'Directory /express-backend not found. Exiting.' && exit 1;
         }
+        
+        # Pull the latest code
         git pull origin master || {
           echo 'Failed to pull from repository. Exiting.' && exit 1;
         }
+
+        # Ensure dependencies are installed
         npm install
-        pm2 restart all || node index.js
+
+        # Check if PM2 is installed, install if not
+        if ! command -v pm2 &> /dev/null; then
+          echo 'PM2 not found. Installing...'
+          npm install -g pm2
+        fi
+
+        # Start or restart the application using PM2
+        pm2 start index.js --name "express-backend" --watch || {
+          echo 'Failed to start or restart application with PM2. Exiting.' && exit 1;
+        }
+
+        # Ensure the application is running
+        pm2 list || {
+          echo 'Failed to verify PM2 processes. Exiting.' && exit 1;
+        }
         "
